@@ -12,3 +12,6 @@ frontend/
 .DS_Store
 
 /src/generated/prisma
+
+# Environment
+.env
