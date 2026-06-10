@@ -4,37 +4,16 @@ const { randomBytes } = require('crypto');
 const bcrypt = require('bcrypt');
 const { usersRepository } = require('../entity/users.repository.js');
 const { mailer } = require('../utils/mailer.js');
+const { userService } = require('../services/user.service.js');
 
 const SALT_ROUNDS = 10;
-const EMAIL_PATTERN = /^[\w.+-]+@([\w-]+\.){1,3}[\w-]{2,}$/;
-const MIN_PASSWORD_LENGTH = 6;
-
-function validateEmail(email) {
-  if (!email) {
-    return 'Email is required';
-  }
-
-  if (!EMAIL_PATTERN.test(email)) {
-    return 'Email is not valid';
-  }
-}
-
-function validatePassword(password) {
-  if (!password) {
-    return 'Password is required';
-  }
-
-  if (password.length < MIN_PASSWORD_LENGTH) {
-    return `At least ${MIN_PASSWORD_LENGTH} characters`;
-  }
-}
 
 const register = async (req, res) => {
   const { email, password } = req.body;
 
   const errors = {
-    email: validateEmail(email),
-    password: validatePassword(password),
+    email: userService.validateEmail(email),
+    password: userService.validatePassword(password),
   };
 
   if (Object.values(errors).some(Boolean)) {
@@ -59,15 +38,15 @@ const register = async (req, res) => {
 
   const activationToken = randomBytes(32).toString('hex');
 
-  const {
-    password: _,
-    activationToken: __,
-    ...user
-  } = await usersRepository.create(email, hashedPassword, activationToken);
+  const user = await usersRepository.create(
+    email,
+    hashedPassword,
+    activationToken,
+  );
 
   await mailer.sendActivationLink(email, activationToken);
 
-  res.json({ user });
+  res.json({ user: userService.normalize(user) });
 };
 
 const activate = async (req, res) => {
@@ -81,18 +60,30 @@ const activate = async (req, res) => {
     return;
   }
 
-  const {
-    password: _,
-    activationToken: __,
-    ...activatedUser
-  } = await usersRepository.activate(email);
+  const activatedUser = await usersRepository.activate(email);
 
-  res.json({ user: activatedUser });
+  res.json({ user: userService.normalize(activatedUser) });
+};
+
+const login = async (req, res) => {
+  const { email, password } = req.body;
+
+  const user = await usersRepository.getByEmail(email);
+  const isPasswordValid = await bcrypt.compare(password, user?.password || '');
+
+  if (!user || !isPasswordValid || user.activationToken !== null) {
+    res.status(401).json({ message: 'Invalid credentials' });
+
+    return;
+  }
+
+  res.json({ user: userService.normalize(user) });
 };
 
 const authController = {
   register,
   activate,
+  login,
 };
 
 module.exports = { authController };
