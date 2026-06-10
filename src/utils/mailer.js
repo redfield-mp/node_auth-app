@@ -20,7 +20,7 @@ function send(email, subject, html) {
 }
 
 function sendActivationLink(email, activationToken) {
-  const link = `${process.env.CLIENT_URL}/auth/activation/${email}/${activationToken}`;
+  const link = `${process.env.CLIENT_URL}/activate/${encodeURIComponent(email)}/${activationToken}`;
   const html = `
     <h1>Account activation</h1>
     <a href="${link}">${link}</a>
