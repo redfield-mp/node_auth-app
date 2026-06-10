@@ -19,6 +19,16 @@ function send(email, subject, html) {
   });
 }
 
-const mailer = { send };
+function sendActivationLink(email, activationToken) {
+  const link = `${process.env.CLIENT_URL}/auth/activation/${email}/${activationToken}`;
+  const html = `
+    <h1>Account activation</h1>
+    <a href="${link}">${link}</a>
+  `;
+
+  return send(email, 'Account activation', html);
+}
+
+const mailer = { send, sendActivationLink };
 
 module.exports = { mailer };

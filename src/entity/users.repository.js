@@ -8,9 +8,9 @@ function getByEmail(email) {
   });
 }
 
-function create(email, password) {
+function create(email, password, activationToken) {
   return db.user.create({
-    data: { email, password },
+    data: { email, password, activationToken },
   });
 }
 

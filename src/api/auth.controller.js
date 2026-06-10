@@ -1,7 +1,9 @@
 'use strict';
 
+const { randomBytes } = require('crypto');
 const bcrypt = require('bcrypt');
 const { usersRepository } = require('../entity/users.repository.js');
+const { mailer } = require('../utils/mailer.js');
 
 const SALT_ROUNDS = 10;
 const EMAIL_PATTERN = /^[\w.+-]+@([\w-]+\.){1,3}[\w-]{2,}$/;
@@ -55,10 +57,15 @@ const register = async (req, res) => {
     return;
   }
 
-  const { password: _, ...user } = await usersRepository.create(
-    email,
-    hashedPassword,
-  );
+  const activationToken = randomBytes(32).toString('hex');
+
+  const {
+    password: _,
+    activationToken: __,
+    ...user
+  } = await usersRepository.create(email, hashedPassword, activationToken);
+
+  await mailer.sendActivationLink(email, activationToken);
 
   res.json({ user });
 };
