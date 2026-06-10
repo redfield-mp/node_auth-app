@@ -14,9 +14,17 @@ function create(email, password, activationToken) {
   });
 }
 
+function activate(email) {
+  return db.user.update({
+    where: { email },
+    data: { activationToken: null },
+  });
+}
+
 const usersRepository = {
   getByEmail,
   create,
+  activate,
 };
 
 module.exports = { usersRepository };

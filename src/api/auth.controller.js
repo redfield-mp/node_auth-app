@@ -70,8 +70,29 @@ const register = async (req, res) => {
   res.json({ user });
 };
 
+const activate = async (req, res) => {
+  const { email, token } = req.params;
+
+  const user = await usersRepository.getByEmail(email);
+
+  if (!user || user.activationToken !== token) {
+    res.sendStatus(404);
+
+    return;
+  }
+
+  const {
+    password: _,
+    activationToken: __,
+    ...activatedUser
+  } = await usersRepository.activate(email);
+
+  res.json({ user: activatedUser });
+};
+
 const authController = {
   register,
+  activate,
 };
 
 module.exports = { authController };
