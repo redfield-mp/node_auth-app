@@ -191,6 +191,7 @@ const authController = {
   logout,
   requestPasswordReset,
   resetPassword,
+  confirmEmail: activate,
 };
 
 module.exports = { authController };
