@@ -3,6 +3,7 @@
 const { randomBytes } = require('crypto');
 const bcrypt = require('bcrypt');
 const { usersRepository } = require('../entity/users.repository.js');
+const { tokensRepository } = require('../entity/tokens.repository.js');
 const { userService } = require('../services/user.service.js');
 const { mailer } = require('../utils/mailer.js');
 
@@ -86,6 +87,7 @@ const updateEmail = async (req, res) => {
 
   await Promise.all([
     usersRepository.updateEmail(id, newEmail, activationToken),
+    tokensRepository.deleteByUserId(id),
     mailer.sendNewEmailConfirmation(newEmail, activationToken),
     mailer.sendEmailChangeNotification(oldEmail),
   ]);
