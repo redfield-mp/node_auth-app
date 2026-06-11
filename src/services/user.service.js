@@ -3,8 +3,8 @@
 const EMAIL_PATTERN = /^[\w.+-]+@([\w-]+\.){1,3}[\w-]{2,}$/;
 const MIN_PASSWORD_LENGTH = 6;
 
-function normalize({ id, email }) {
-  return { id, email };
+function normalize({ id, email, name }) {
+  return { id, email, name };
 }
 
 function validateEmail(email) {
@@ -27,10 +27,17 @@ function validatePassword(password) {
   }
 }
 
+function validateName(name) {
+  if (!name) {
+    return 'Name is required';
+  }
+}
+
 const userService = {
   normalize,
   validateEmail,
   validatePassword,
+  validateName,
 };
 
 module.exports = { userService };

@@ -8,10 +8,8 @@ function getByEmail(email) {
   });
 }
 
-function create(email, password, activationToken) {
-  return db.user.create({
-    data: { email, password, activationToken },
-  });
+function create(data) {
+  return db.user.create({ data });
 }
 
 function activate(email) {

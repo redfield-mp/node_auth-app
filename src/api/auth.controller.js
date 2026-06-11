@@ -29,9 +29,10 @@ async function sendAuthentication(res, user) {
 }
 
 const register = async (req, res) => {
-  const { email, password } = req.body;
+  const { name, email, password } = req.body;
 
   const errors = {
+    name: userService.validateName(name),
     email: userService.validateEmail(email),
     password: userService.validatePassword(password),
   };
@@ -58,11 +59,12 @@ const register = async (req, res) => {
 
   const activationToken = randomBytes(32).toString('hex');
 
-  const user = await usersRepository.create(
+  const user = await usersRepository.create({
     email,
-    hashedPassword,
+    password: hashedPassword,
     activationToken,
-  );
+    name,
+  });
 
   await mailer.sendActivationLink(email, activationToken);
 
