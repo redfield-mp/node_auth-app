@@ -6,13 +6,17 @@ const { usersRepository } = require('../entity/users.repository.js');
 const { mailer } = require('../utils/mailer.js');
 const { userService } = require('../services/user.service.js');
 const { jwt } = require('../utils/jwt.js');
+const { tokensRepository } = require('../entity/tokens.repository.js');
 
 const SALT_ROUNDS = 10;
 
-function sendAuthentication(res, user) {
+async function sendAuthentication(res, user) {
   const userData = userService.normalize(user);
   const accessToken = jwt.generateAccessToken(userData);
   const refreshToken = jwt.generateRefreshToken(userData);
+
+  await tokensRepository.deleteByUserId(user.id).catch(() => {});
+  await tokensRepository.create(user.id, refreshToken);
 
   res.cookie('refreshToken', refreshToken, {
     maxAge: 7 * 24 * 60 * 60 * 1000,
@@ -99,16 +103,11 @@ const login = async (req, res) => {
 const refresh = async (req, res) => {
   const refreshToken = req.cookies?.refreshToken || '';
   const userData = jwt.validateRefreshToken(refreshToken);
+  const user = await usersRepository.getByEmail(userData?.email || '');
+  const token = await tokensRepository.getByToken(refreshToken);
 
-  if (!userData) {
-    res.status(401).json({ message: 'Invalid token' });
-
-    return;
-  }
-
-  const user = await usersRepository.getByEmail(userData.email);
-
-  if (!user || user.activationToken !== null) {
+  if (!user || !userData || !token || token.userId !== user.id) {
+    res.clearCookie('refreshToken', { sameSite: 'none', secure: true });
     res.status(401).json({ message: 'Invalid token' });
 
     return;
@@ -118,6 +117,13 @@ const refresh = async (req, res) => {
 };
 
 const logout = async (req, res) => {
+  const refreshToken = req.cookies?.refreshToken || '';
+  const userData = jwt.validateRefreshToken(refreshToken);
+
+  if (userData) {
+    await tokensRepository.deleteByUserId(userData.id);
+  }
+
   res.clearCookie('refreshToken', {
     sameSite: 'none',
     secure: true,
