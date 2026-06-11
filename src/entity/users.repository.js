@@ -45,6 +45,20 @@ function updatePassword(email, password) {
   });
 }
 
+function updateName(id, name) {
+  return db.user.update({
+    where: { id },
+    data: { name },
+  });
+}
+
+function updateEmail(id, email, activationToken) {
+  return db.user.update({
+    where: { id },
+    data: { email, activationToken },
+  });
+}
+
 const usersRepository = {
   getByEmail,
   create,
@@ -53,6 +67,8 @@ const usersRepository = {
   getByResetToken,
   setResetToken,
   updatePassword,
+  updateName,
+  updateEmail,
 };
 
 module.exports = { usersRepository };

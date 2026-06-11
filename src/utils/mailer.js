@@ -39,6 +39,31 @@ function sendPasswordResetLink(email, resetToken) {
   return send(email, 'Password reset', html);
 }
 
-const mailer = { send, sendActivationLink, sendPasswordResetLink };
+function sendNewEmailConfirmation(email, activationToken) {
+  const link = `${process.env.CLIENT_URL}/confirm-email/${encodeURIComponent(email)}/${activationToken}`;
+  const html = `
+    <h1>Confirm your new email</h1>
+    <a href="${link}">${link}</a>
+  `;
+
+  return send(email, 'Confirm new email', html);
+}
+
+function sendEmailChangeNotification(email) {
+  const html = `
+    <h1>Your email has been changed</h1>
+    <p>If you did not request this change, please contact support immediately.</p>
+  `;
+
+  return send(email, 'Email address changed', html);
+}
+
+const mailer = {
+  send,
+  sendActivationLink,
+  sendPasswordResetLink,
+  sendNewEmailConfirmation,
+  sendEmailChangeNotification,
+};
 
 module.exports = { mailer };
