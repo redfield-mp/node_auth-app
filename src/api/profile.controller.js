@@ -27,8 +27,14 @@ const updateName = async (req, res) => {
 };
 
 const updatePassword = async (req, res) => {
-  const { oldPassword, newPassword } = req.body;
+  const { oldPassword, newPassword, newPasswordConfirmation } = req.body;
   const { email } = req.user;
+
+  if (newPassword !== newPasswordConfirmation) {
+    res.status(400).json({ message: 'Passwords do not match' });
+
+    return;
+  }
 
   const passwordError = userService.validatePassword(newPassword);
 
@@ -55,8 +61,14 @@ const updatePassword = async (req, res) => {
 };
 
 const updateEmail = async (req, res) => {
-  const { password, newEmail } = req.body;
+  const { password, newEmail, newEmailConfirmation } = req.body;
   const { email: oldEmail, id } = req.user;
+
+  if (newEmail !== newEmailConfirmation) {
+    res.status(400).json({ message: 'Emails do not match' });
+
+    return;
+  }
 
   const emailError = userService.validateEmail(newEmail);
 
