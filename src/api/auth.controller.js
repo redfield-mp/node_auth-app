@@ -134,12 +134,63 @@ const logout = async (req, res) => {
   res.sendStatus(204);
 };
 
+const requestPasswordReset = async (req, res) => {
+  const { email } = req.body;
+
+  const user = await usersRepository.getByEmail(email);
+
+  if (!user) {
+    res.sendStatus(204);
+
+    return;
+  }
+
+  const resetToken = randomBytes(32).toString('hex');
+  const resetTokenExpiresAt = new Date(Date.now() + 60 * 60 * 1000);
+
+  await Promise.all([
+    usersRepository.setResetToken(email, resetToken, resetTokenExpiresAt),
+    mailer.sendPasswordResetLink(email, resetToken),
+  ]);
+
+  res.sendStatus(204);
+};
+
+const resetPassword = async (req, res) => {
+  const { token } = req.params;
+  const { password } = req.body;
+
+  const passwordError = userService.validatePassword(password);
+
+  if (passwordError) {
+    res.status(400).json({ message: passwordError });
+
+    return;
+  }
+
+  const user = await usersRepository.getByResetToken(token);
+
+  if (!user || user.resetTokenExpiresAt < new Date()) {
+    res.status(400).json({ message: 'Token is invalid or expired' });
+
+    return;
+  }
+
+  const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
+
+  await usersRepository.updatePassword(user.email, hashedPassword);
+
+  res.sendStatus(204);
+};
+
 const authController = {
   register,
   activate,
   login,
   refresh,
   logout,
+  requestPasswordReset,
+  resetPassword,
 };
 
 module.exports = { authController };
