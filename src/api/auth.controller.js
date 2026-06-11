@@ -164,7 +164,13 @@ const requestPasswordReset = async (req, res) => {
 
 const resetPassword = async (req, res) => {
   const { token } = req.params;
-  const { password } = req.body;
+  const { password, confirmation } = req.body;
+
+  if (password !== confirmation) {
+    res.status(400).json({ message: 'Passwords do not match' });
+
+    return;
+  }
 
   const passwordError = userService.validatePassword(password);
 
