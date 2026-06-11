@@ -22,4 +22,6 @@ app.use('/auth', authRouter);
 app.use('/users', usersRouter);
 app.use('/profile', profileRouter);
 
+app.use((req, res) => res.sendStatus(404));
+
 module.exports = { app };
