@@ -9,6 +9,21 @@ const { jwt } = require('../utils/jwt.js');
 
 const SALT_ROUNDS = 10;
 
+function sendAuthentication(res, user) {
+  const userData = userService.normalize(user);
+  const accessToken = jwt.generateAccessToken(userData);
+  const refreshToken = jwt.generateRefreshToken(userData);
+
+  res.cookie('refreshToken', refreshToken, {
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+    httpOnly: true,
+    sameSite: 'none',
+    secure: true,
+  });
+
+  res.json({ accessToken, user: userData });
+}
+
 const register = async (req, res) => {
   const { email, password } = req.body;
 
@@ -62,10 +77,8 @@ const activate = async (req, res) => {
   }
 
   const activatedUser = await usersRepository.activate(email);
-  const normalizedUser = userService.normalize(activatedUser);
-  const accessToken = jwt.generateAccessToken(normalizedUser);
 
-  res.json({ accessToken, user: normalizedUser });
+  sendAuthentication(res, activatedUser);
 };
 
 const login = async (req, res) => {
@@ -80,16 +93,45 @@ const login = async (req, res) => {
     return;
   }
 
-  const normalizedUser = userService.normalize(user);
-  const accessToken = jwt.generateAccessToken(normalizedUser);
+  sendAuthentication(res, user);
+};
 
-  res.json({ accessToken, user: normalizedUser });
+const refresh = async (req, res) => {
+  const refreshToken = req.cookies?.refreshToken || '';
+  const userData = jwt.validateRefreshToken(refreshToken);
+
+  if (!userData) {
+    res.status(401).json({ message: 'Invalid token' });
+
+    return;
+  }
+
+  const user = await usersRepository.getByEmail(userData.email);
+
+  if (!user || user.activationToken !== null) {
+    res.status(401).json({ message: 'Invalid token' });
+
+    return;
+  }
+
+  sendAuthentication(res, user);
+};
+
+const logout = async (req, res) => {
+  res.clearCookie('refreshToken', {
+    sameSite: 'none',
+    secure: true,
+  });
+
+  res.sendStatus(204);
 };
 
 const authController = {
   register,
   activate,
   login,
+  refresh,
+  logout,
 };
 
 module.exports = { authController };
