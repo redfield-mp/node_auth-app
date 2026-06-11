@@ -21,10 +21,17 @@ function activate(email) {
   });
 }
 
+function getAllActive() {
+  return db.user.findMany({
+    where: { activationToken: null },
+  });
+}
+
 const usersRepository = {
   getByEmail,
   create,
   activate,
+  getAllActive,
 };
 
 module.exports = { usersRepository };
