@@ -5,6 +5,7 @@ const bcrypt = require('bcrypt');
 const { usersRepository } = require('../entity/users.repository.js');
 const { mailer } = require('../utils/mailer.js');
 const { userService } = require('../services/user.service.js');
+const { jwt } = require('../utils/jwt.js');
 
 const SALT_ROUNDS = 10;
 
@@ -61,8 +62,10 @@ const activate = async (req, res) => {
   }
 
   const activatedUser = await usersRepository.activate(email);
+  const normalizedUser = userService.normalize(activatedUser);
+  const accessToken = jwt.generateAccessToken(normalizedUser);
 
-  res.json({ user: userService.normalize(activatedUser) });
+  res.json({ accessToken, user: normalizedUser });
 };
 
 const login = async (req, res) => {
@@ -77,7 +80,10 @@ const login = async (req, res) => {
     return;
   }
 
-  res.json({ user: userService.normalize(user) });
+  const normalizedUser = userService.normalize(user);
+  const accessToken = jwt.generateAccessToken(normalizedUser);
+
+  res.json({ accessToken, user: normalizedUser });
 };
 
 const authController = {
