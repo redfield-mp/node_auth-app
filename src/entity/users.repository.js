@@ -25,11 +25,34 @@ function getAllActive() {
   });
 }
 
+function getByResetToken(resetToken) {
+  return db.user.findFirst({
+    where: { resetToken },
+  });
+}
+
+function setResetToken(email, resetToken, resetTokenExpiresAt) {
+  return db.user.update({
+    where: { email },
+    data: { resetToken, resetTokenExpiresAt },
+  });
+}
+
+function updatePassword(email, password) {
+  return db.user.update({
+    where: { email },
+    data: { password, resetToken: null, resetTokenExpiresAt: null },
+  });
+}
+
 const usersRepository = {
   getByEmail,
   create,
   activate,
   getAllActive,
+  getByResetToken,
+  setResetToken,
+  updatePassword,
 };
 
 module.exports = { usersRepository };

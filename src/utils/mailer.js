@@ -29,6 +29,16 @@ function sendActivationLink(email, activationToken) {
   return send(email, 'Account activation', html);
 }
 
-const mailer = { send, sendActivationLink };
+function sendPasswordResetLink(email, resetToken) {
+  const link = `${process.env.CLIENT_URL}/reset-password/${resetToken}`;
+  const html = `
+    <h1>Password reset</h1>
+    <a href="${link}">${link}</a>
+  `;
+
+  return send(email, 'Password reset', html);
+}
+
+const mailer = { send, sendActivationLink, sendPasswordResetLink };
 
 module.exports = { mailer };
