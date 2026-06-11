@@ -93,8 +93,14 @@ const login = async (req, res) => {
   const user = await usersRepository.getByEmail(email);
   const isPasswordValid = await bcrypt.compare(password, user?.password || '');
 
-  if (!user || !isPasswordValid || user.activationToken !== null) {
+  if (!user || !isPasswordValid) {
     res.status(401).json({ message: 'Invalid credentials' });
+
+    return;
+  }
+
+  if (user.activationToken !== null) {
+    res.status(401).json({ message: 'Please activate your email first' });
 
     return;
   }
@@ -179,6 +185,7 @@ const resetPassword = async (req, res) => {
   const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
 
   await usersRepository.updatePassword(user.email, hashedPassword);
+  await tokensRepository.deleteByUserId(user.id);
 
   res.sendStatus(204);
 };
